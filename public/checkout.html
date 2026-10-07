@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — SimpleShop</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ===== navbar ===== -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/index.html" class="logo">🛍️ SimpleShop</a>
+      <div class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/orders.html">My Orders</a>
+        <a href="/cart.html">Cart <span class="cart-badge" id="cart-badge">0</span></a>
+        <span id="auth-area"></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== checkout ===== -->
+  <main class="container">
+    <h2>Checkout</h2>
+    <div id="checkout-box">
+      <p>Loading...</p>
+    </div>
+  </main>
+
+  <!-- ===== footer ===== -->
+  <footer class="footer">
+    <p>SimpleShop — a simple e-commerce demo 🛒</p>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    let user = null; // will hold the logged in user
+
+    async function init() {
+      // 1. check that the user is logged in (checkout needs an account)
+      const meRes = await fetch('/api/me');
+      const meData = await meRes.json();
+      if (!meData.user) {
+        window.location.href = '/login.html';
+        return;
+      }
+      user = meData.user;
+
+      // 2. if the cart is empty there is nothing to check out
+      const cart = getCart();
+      if (cart.length === 0) {
+        document.getElementById('checkout-box').innerHTML = `
+          <div class="empty-state">
+            <p>Your cart is empty 🛒</p>
+            <a href="/index.html" class="btn">Go Shopping</a>
+          </div>`;
+        return;
+      }
+
+      // 3. build the order summary from the cart
+      const res = await fetch('/api/products');
+      const products = await res.json();
+
+      let total = 0;
+      const rows = cart.map(item => {
+        const p = products.find(prod => prod.id === item.id);
+        if (!p) return '';
+        total += p.price * item.qty;
+        return `
+          <div class="summary-row">
+            <span>${p.emoji} ${p.name} × ${item.qty}</span>
+            <span>$${(p.price * item.qty).toFixed(2)}</span>
+          </div>`;
+      }).join('');
+
+      // 4. draw the delivery form + the summary side by side
+      document.getElementById('checkout-box').innerHTML = `
+        <div class="checkout-grid">
+          <form class="form-card" onsubmit="placeOrder(event)">
+            <h3>Delivery Details</h3>
+
+            <label for="fullname">Full Name</label>
+            <input type="text" id="fullname" value="${user.name}" required>
+
+            <label for="address">Street Address</label>
+            <input type="text" id="address" placeholder="123 Main Street" required>
+
+            <label for="city">City</label>
+            <input type="text" id="city" required>
+
+            <label for="zip">ZIP Code</label>
+            <input type="text" id="zip" required>
+
+            <label for="payment">Payment Method</label>
+            <select id="payment">
+              <option>Cash on Delivery</option>
+              <option>Card (fake payment)</option>
+            </select>
+
+            <p class="error-msg" id="error-msg"></p>
+            <button type="submit" class="btn big full">Place Order</button>
+          </form>
+
+          <div class="form-card summary-card">
+            <h3>Order Summary</h3>
+            ${rows}
+            <div class="summary-row total">
+              <span>Total</span>
+              <span>$${total.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // send the order to the server
+    async function placeOrder(event) {
+      event.preventDefault(); // stop the form from reloading the page
+
+      const order = {
+        items: getCart(),
+        fullname: document.getElementById('fullname').value,
+        address: document.getElementById('address').value,
+        city: document.getElementById('city').value,
+        zip: document.getElementById('zip').value,
+        payment: document.getElementById('payment').value
+      };
+
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        // the order worked! empty the cart and show a thank you message
+        saveCart([]);
+        document.getElementById('checkout-box').innerHTML = `
+          <div class="empty-state success-box">
+            <h2>🎉 Thank you, ${user.name}!</h2>
+            <p>Your order <b>#${data.orderId}</b> has been placed — total <b>$${data.total.toFixed(2)}</b>.</p>
+            <a href="/orders.html" class="btn">View My Orders</a>
+            <a href="/index.html" class="btn-outline">Continue Shopping</a>
+          </div>`;
+      } else {
+        // the server said no (maybe out of stock) — show the reason
+        document.getElementById('error-msg').textContent = data.error || 'Something went wrong';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

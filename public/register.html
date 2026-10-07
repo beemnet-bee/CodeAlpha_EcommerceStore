@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — SimpleShop</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ===== navbar ===== -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/index.html" class="logo">🛍️ SimpleShop</a>
+      <div class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/orders.html">My Orders</a>
+        <a href="/cart.html">Cart <span class="cart-badge" id="cart-badge">0</span></a>
+        <span id="auth-area"></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== register form ===== -->
+  <main class="container">
+    <div class="form-card auth-card">
+      <h2>Create your account 📝</h2>
+      <p class="form-sub">It only takes a few seconds</p>
+
+      <form onsubmit="doRegister(event)">
+        <label for="name">Name</label>
+        <input type="text" id="name" placeholder="Your name" required>
+
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@example.com" required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="At least 6 characters" required minlength="6">
+
+        <p class="error-msg" id="error-msg"></p>
+        <button type="submit" class="btn big full">Sign Up</button>
+      </form>
+
+      <p class="form-switch">Already have an account? <a href="/login.html">Log in</a></p>
+    </div>
+  </main>
+
+  <script src="/js/main.js"></script>
+  <script>
+    async function doRegister(event) {
+      event.preventDefault();
+
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('name').value,
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value
+        })
+      });
+      const data = await res.json();
+
+      if (data.user) {
+        // the server logs us in right away, so just go to the shop
+        window.location.href = '/index.html';
+      } else {
+        document.getElementById('error-msg').textContent = data.error || 'Registration failed';
+      }
+    }
+  </script>
+</body>
+</html>

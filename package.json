@@ -1,0 +1,16 @@
+{
+  "name": "simple-ecommerce-store",
+  "version": "1.0.0",
+  "description": "A simple e-commerce store built with Express.js and SQLite (beginner project)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.2.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.2"
+  }
+}

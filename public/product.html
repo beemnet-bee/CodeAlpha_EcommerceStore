@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details — SimpleShop</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ===== navbar ===== -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/index.html" class="logo">🛍️ SimpleShop</a>
+      <div class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/orders.html">My Orders</a>
+        <a href="/cart.html">Cart <span class="cart-badge" id="cart-badge">0</span></a>
+        <span id="auth-area"></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== product details ===== -->
+  <main class="container">
+    <a href="/index.html" class="back-link">← Back to products</a>
+    <div id="product-box">
+      <p>Loading product...</p>
+    </div>
+  </main>
+
+  <!-- ===== footer ===== -->
+  <footer class="footer">
+    <p>SimpleShop — a simple e-commerce demo 🛒</p>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    // get the product id from the URL, e.g. product.html?id=3
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
+
+    let product = null;
+    let quantity = 1;
+
+    async function loadProduct() {
+      const res = await fetch('/api/products/' + productId);
+      product = await res.json();
+
+      const box = document.getElementById('product-box');
+
+      // if the API said "not found", show a friendly message
+      if (product.error) {
+        box.innerHTML = '<p class="empty-state">Product not found 😕</p>';
+        return;
+      }
+
+      document.title = product.name + ' — SimpleShop';
+
+      box.innerHTML = `
+        <div class="detail-card">
+          <div class="detail-thumb" style="background: ${product.color}">${product.emoji}</div>
+          <div class="detail-info">
+            <h1>${product.name}</h1>
+            <p class="price">$${product.price.toFixed(2)}</p>
+            <p class="desc">${product.description}</p>
+            <p class="stock">${product.stock > 0 ? '✔ In stock: ' + product.stock : 'Out of stock 😢'}</p>
+            ${product.stock > 0 ? `
+              <div class="qty-row">
+                <button class="qty-btn" onclick="changeQty(-1)">-</button>
+                <span id="qty-display">${quantity}</span>
+                <button class="qty-btn" onclick="changeQty(1)">+</button>
+              </div>
+              <button class="btn big" onclick="addThisToCart()">Add to Cart</button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // increase / decrease the quantity with the - and + buttons
+    function changeQty(delta) {
+      quantity = quantity + delta;
+      if (quantity < 1) quantity = 1;
+      if (product && quantity > product.stock) quantity = product.stock;
+      document.getElementById('qty-display').textContent = quantity;
+    }
+
+    function addThisToCart() {
+      addToCart(product.id, quantity);
+    }
+
+    loadProduct();
+  </script>
+</body>
+</html>

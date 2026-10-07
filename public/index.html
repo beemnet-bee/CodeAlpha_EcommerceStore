@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimpleShop — Home</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ===== navbar (the same on every page) ===== -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/index.html" class="logo">🛍️ SimpleShop</a>
+      <div class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/orders.html">My Orders</a>
+        <a href="/cart.html">Cart <span class="cart-badge" id="cart-badge">0</span></a>
+        <!-- this part is filled in by main.js depending on login status -->
+        <span id="auth-area"></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== hero banner ===== -->
+  <section class="hero">
+    <h1>Welcome to SimpleShop 👋</h1>
+    <p>A little online store where you can browse products, add them to your cart and place an order. Built with Express + SQLite as a learning project.</p>
+    <a href="#products" class="btn">Start Shopping</a>
+  </section>
+
+  <!-- ===== product grid ===== -->
+  <main class="container" id="products">
+    <h2>Our Products</h2>
+    <div class="grid" id="product-grid">
+      <p>Loading products...</p>
+    </div>
+  </main>
+
+  <!-- ===== footer ===== -->
+  <footer class="footer">
+    <p>SimpleShop — a simple e-commerce demo 🛒</p>
+  </footer>
+
+  <!-- main.js first (shared helpers), then the code for this page -->
+  <script src="/js/main.js"></script>
+  <script>
+    // load the products from our API and show them as cards
+    async function loadProducts() {
+      const res = await fetch('/api/products');
+      const products = await res.json();
+
+      const grid = document.getElementById('product-grid');
+      grid.innerHTML = products.map(p => `
+        <div class="card">
+          <a href="/product.html?id=${p.id}" class="thumb" style="background: ${p.color}">${p.emoji}</a>
+          <h3 class="card-title"><a href="/product.html?id=${p.id}">${p.name}</a></h3>
+          <p class="price">$${p.price.toFixed(2)}</p>
+          <div class="card-actions">
+            <a href="/product.html?id=${p.id}" class="btn-outline">View</a>
+            <button class="btn" onclick="addToCart(${p.id}, 1)">Add to Cart</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>

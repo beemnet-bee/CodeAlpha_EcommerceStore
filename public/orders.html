@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Orders — SimpleShop</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ===== navbar ===== -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/index.html" class="logo">🛍️ SimpleShop</a>
+      <div class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/orders.html">My Orders</a>
+        <a href="/cart.html">Cart <span class="cart-badge" id="cart-badge">0</span></a>
+        <span id="auth-area"></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== order history ===== -->
+  <main class="container">
+    <h2>My Orders</h2>
+    <div id="orders-box">
+      <p>Loading orders...</p>
+    </div>
+  </main>
+
+  <!-- ===== footer ===== -->
+  <footer class="footer">
+    <p>SimpleShop — a simple e-commerce demo 🛒</p>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    async function loadOrders() {
+      const box = document.getElementById('orders-box');
+
+      // this page needs a login
+      const meRes = await fetch('/api/me');
+      const meData = await meRes.json();
+      if (!meData.user) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const res = await fetch('/api/orders');
+      const orders = await res.json();
+
+      // user hasn't ordered anything yet
+      if (orders.length === 0) {
+        box.innerHTML = `
+          <div class="empty-state">
+            <p>You have not placed any orders yet 📦</p>
+            <a href="/index.html" class="btn">Start Shopping</a>
+          </div>`;
+        return;
+      }
+
+      // draw every order as a card
+      box.innerHTML = orders.map(order => `
+        <div class="order-card">
+          <div class="order-head">
+            <h3>Order #${order.id}</h3>
+            <span class="status status-${order.status.toLowerCase()}">${order.status}</span>
+          </div>
+          <p class="order-date">${new Date(order.created_at).toLocaleString()}</p>
+          <div class="order-items">
+            ${order.items.map(it => `<p>${it.name} × ${it.quantity} — $${(it.price * it.quantity).toFixed(2)}</p>`).join('')}
+          </div>
+          <p class="order-total">Total: <b>$${order.total.toFixed(2)}</b></p>
+          <p class="order-ship">📦 Shipping to: ${order.fullname}, ${order.address}, ${order.city} ${order.zip} · Payment: ${order.payment}</p>
+        </div>
+      `).join('');
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>
